@@ -1,0 +1,12 @@
+# Example configuration. Never put tokens/secrets in this file.
+ado:
+  organizationUrl: https://dev.azure.com/YOUR_ORG
+  project: YOUR_PROJECT
+github:
+  targetOwner: YOUR_GITHUB_ORG
+  repositoryPrefix: ""
+migration:
+  includeRepositories: [] # empty = all discovered repos in the selected project
+  excludeRepositories: []
+  allowOverwrite: false
+  includeLfs: false # enable only after confirming LFS prerequisites

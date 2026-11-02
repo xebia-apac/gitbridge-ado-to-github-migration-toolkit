@@ -1,0 +1,42 @@
+name: 04 - Post Migration Validation
+on:
+  workflow_dispatch:
+    inputs:
+      ado_org_url:
+        required: true
+        type: string
+      ado_project:
+        required: true
+        type: string
+      target_owner:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Compare source and target refs
+        env:
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+          GH_MIGRATION_TOKEN: ${{ secrets.GH_MIGRATION_TOKEN }}
+          ADO_ORG_URL: ${{ inputs.ado_org_url }}
+          ADO_PROJECT: ${{ inputs.ado_project }}
+          GH_TARGET_OWNER: ${{ inputs.target_owner }}
+          REPOSITORY: ${{ inputs.repository }}
+        run: node src/cli.mjs validate
+      # actions/upload-artifact v7.0.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: post-migration-validation-${{ github.run_number }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 90

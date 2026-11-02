@@ -1,0 +1,58 @@
+name: 03 - Migrate One Git Repository
+on:
+  workflow_dispatch:
+    inputs:
+      ado_org_url:
+        required: true
+        type: string
+      ado_project:
+        required: true
+        type: string
+      target_owner:
+        required: true
+        type: string
+      repository:
+        description: Exact source ADO repository name
+        required: true
+        type: string
+      confirm_migration:
+        description: Confirm dry-run reviewed and migration approved
+        required: true
+        type: boolean
+        default: false
+      target_private:
+        description: Create destination as private
+        required: true
+        type: boolean
+        default: true
+permissions:
+  contents: read
+jobs:
+  migrate:
+    if: ${{ inputs.confirm_migration == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    environment: migration-approval
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Execute guarded Git mirror migration
+        env:
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+          GH_MIGRATION_TOKEN: ${{ secrets.GH_MIGRATION_TOKEN }}
+          ADO_ORG_URL: ${{ inputs.ado_org_url }}
+          ADO_PROJECT: ${{ inputs.ado_project }}
+          GH_TARGET_OWNER: ${{ inputs.target_owner }}
+          REPOSITORY: ${{ inputs.repository }}
+          CONFIRM_MIGRATION: "true"
+          TARGET_PRIVATE: ${{ inputs.target_private }}
+          ALLOW_OVERWRITE: "false"
+        run: node src/cli.mjs migrate
+      # actions/upload-artifact v7.0.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: migration-execution-${{ github.run_number }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 90

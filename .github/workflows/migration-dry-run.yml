@@ -1,0 +1,39 @@
+name: 02 - Migration Dry Run
+on:
+  workflow_dispatch:
+    inputs:
+      ado_org_url:
+        required: true
+        type: string
+      ado_project:
+        required: true
+        type: string
+      target_owner:
+        description: GitHub organization name
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Run read-only assessment
+        env:
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+          GH_MIGRATION_TOKEN: ${{ secrets.GH_MIGRATION_TOKEN }}
+          ADO_ORG_URL: ${{ inputs.ado_org_url }}
+          ADO_PROJECT: ${{ inputs.ado_project }}
+          GH_TARGET_OWNER: ${{ inputs.target_owner }}
+        run: node src/cli.mjs dry-run
+      # actions/upload-artifact v7.0.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: migration-dry-run-${{ github.run_number }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 30
